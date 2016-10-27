@@ -1,5 +1,6 @@
 //every node.js has these
 //app config
+// run ./mongod to start the db
 var express         = require("express"),
     bodyParser      = require("body-parser"),
     mongoose        = require("mongoose"),
@@ -29,10 +30,41 @@ var Blog = mongoose.model("Blog", blogSchema);
 //     title: "Test Blog post",
 //     image: "https://placekitten.com/200/300",
 //     body: "Here's a new cute kitten that PlaceKitten added!",
-// })
-//RESTful routes
+// });
+
+//RESTFUL ROUTES
+//INDEX ROUTE
 app.get("/", function(req, res){
     res.redirect("/blogs");
+});
+
+//NEW ROUTE /model/new
+app.get("/blogs/new", function(req, res) {
+    res.render("new");
+})
+
+//CREATE ROUTE /model
+app.post("/blogs", function(req, res){
+   //create blog
+   Blog.create(req.body.blog, function(err, newBlog){
+       if(err){
+           res.render("new")
+       } else {
+              //redirect
+           res.redirect("/blogs")
+       }
+   })
+});
+
+//SHOW ROUTE
+app.get("/blogs/:id", function(req, res) {
+   Blog.findById(req.params.id, function(err, foundBlog){
+     if(err) {
+         res.redirect("/blogs");
+     } else {
+         res.render("show", {blog: foundBlog});
+     }
+   });
 });
 
 app.get("/blogs", function(req, res){
