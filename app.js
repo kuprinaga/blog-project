@@ -3,6 +3,7 @@
 // run ./mongod to start the db
 var express         = require("express"),
     bodyParser      = require("body-parser"),
+    methodOverride  = require("method-override"),
     mongoose        = require("mongoose"),
     app             = express();
     
@@ -13,6 +14,7 @@ mongoose.connect("mongodb://localhost/blog-app");
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(methodOverride("_method"));
 
 //ending "every node.js has these"
 
@@ -38,22 +40,33 @@ app.get("/", function(req, res){
     res.redirect("/blogs");
 });
 
+app.get("/blogs", function(req, res){
+    Blog.find({}, function(err, blogs){
+        if(err){
+            console.log(err);
+        } else {
+            //render and pass the data from db
+            res.render("index.ejs", {blogs: blogs});    
+        }
+    });
+});
+
 //NEW ROUTE /model/new
 app.get("/blogs/new", function(req, res) {
     res.render("new");
-})
+});
 
 //CREATE ROUTE /model
 app.post("/blogs", function(req, res){
    //create blog
    Blog.create(req.body.blog, function(err, newBlog){
        if(err){
-           res.render("new")
+           res.render("new");
        } else {
               //redirect
-           res.redirect("/blogs")
+           res.redirect("/blogs");
        }
-   })
+   });
 });
 
 //SHOW ROUTE
@@ -67,18 +80,43 @@ app.get("/blogs/:id", function(req, res) {
    });
 });
 
-app.get("/blogs", function(req, res){
-    Blog.find({}, function(err, blogs){
-        if(err){
-            console.log(err)
-        } else {
-            //render and pass the data from db
-            res.render("index.ejs", {blogs: blogs});    
-        }
-    })
-
+//EDIT ROUTE
+app.get("/blogs/:id/edit", function(req, res) {
+       Blog.findById(req.params.id, function(err, foundBlog){
+     if(err) {
+         res.redirect("/blogs");
+     } else {
+         res.render("edit", {blog: foundBlog});
+     }
+   });
 });
 
+//UPDATE ROUTE
+app.put("/blogs/:id", function(req, res){
+    Blog.findByIdAndUpdate(req.params.id, 
+    req.body.blog, function(err, updatedBlog){
+        if (err){
+            res.redirect("/blogs");
+        } else {
+            res.redirect("/blogs/" + req.params.id);
+        }
+    });
+});
+
+//DESTROY ROUTE
+//delete and redirect elsewhere
+app.delete("/blogs/:id", function (req, res) {
+    //destroy
+    Blog.findByIdAndRemove(req.params.id, function(err){
+    if(err){
+        res.redirect("/blogs");
+    } else {
+        res.redirect("/blogs");
+    }
+    });
+});
+
+//SERVER CHECK C9
 app.listen(process.env.PORT, process.env.IP, function(){
-    console.log("it's working")
-})
+    console.log("it's working");
+});
